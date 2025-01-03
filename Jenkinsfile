@@ -22,7 +22,6 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                // For public repo, no credentials needed
                 git branch: 'main',
                     url: 'https://github.com/farhanhameed010/far-devops-assignment-4.git'
             }
@@ -30,27 +29,31 @@ pipeline {
         
         stage('Node.js Environment') {
             steps {
-                script {
-                    docker.image("node:${params.NODE_VERSION}").inside {
-                        // Check Node version and output with username
-                        sh 'node -v > nodeVersion.txt'
-                        def nodeVersion = readFile('nodeVersion.txt').trim()
-                        echo "Node.js ${nodeVersion} - Checked by ${params.USER_NAME}"
-                    }
-                }
+                sh """
+                    # Pull Node.js image
+                    docker pull node:${params.NODE_VERSION}
+                    
+                    # Run Node.js container and get version
+                    docker run --rm node:${params.NODE_VERSION} node -v > nodeVersion.txt
+                    
+                    # Display version with username
+                    echo "Node.js \$(cat nodeVersion.txt) - Checked by ${params.USER_NAME}"
+                """
             }
         }
         
         stage('Maven Environment') {
             steps {
-                script {
-                    docker.image("maven:${params.MAVEN_VERSION}").inside {
-                        // Check Maven version and output with username
-                        sh 'mvn -v > mavenVersion.txt'
-                        def mavenVersion = readFile('mavenVersion.txt').trim()
-                        echo "Maven Version Check - ${mavenVersion} - Checked by ${params.USER_NAME}"
-                    }
-                }
+                sh """
+                    # Pull Maven image
+                    docker pull maven:${params.MAVEN_VERSION}
+                    
+                    # Run Maven container and get version
+                    docker run --rm maven:${params.MAVEN_VERSION} mvn -v | head -n 1 > mavenVersion.txt
+                    
+                    # Display version with username
+                    echo "Maven \$(cat mavenVersion.txt) - Checked by ${params.USER_NAME}"
+                """
             }
         }
     }
